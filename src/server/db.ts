@@ -185,7 +185,7 @@ function normalizeLegacyStatuses() {
   db.prepare(
     "UPDATE articles SET status = 'draft' WHERE status IN ('backlog', 'outlined', 'drafting')"
   ).run();
-  db.prepare("UPDATE articles SET status = 'published' WHERE status = 'publishing'").run();
+  // 不再把 publishing 映射为 published，publishing 是合法的中间状态
 }
 
 function titleFromSlug(slug: string) {
@@ -225,30 +225,32 @@ function readProjectSummary(projectPath: string) {
 function discoverProjectArticles(projectBase: string): SeedArticle[] {
   if (!fs.existsSync(projectBase)) return [];
 
-  return fs
+  const entries = fs
     .readdirSync(projectBase, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => {
-      const projectPath = path.join(projectBase, entry.name);
-      const draftPath = path.join(projectPath, "draft.md");
-      if (!fs.existsSync(draftPath)) return null;
-      const draft = fs.readFileSync(draftPath, "utf8");
-      return {
-        title: readProjectTitle(projectPath, entry.name),
-        slug: entry.name,
-        status: "draft" as const,
-        review_round: 0,
-        priority: "medium" as const,
-        source: "project-import",
-        target_platforms: ["github"],
-        target_audience: null,
-        core_claim: readProjectSummary(projectPath),
-        estimated_words: estimateWords(draft),
-        project_path: projectPath
-      };
-    })
-    .filter((article): article is SeedArticle => article !== null)
-    .sort((a, b) => a.slug.localeCompare(b.slug));
+    .filter((entry) => entry.isDirectory());
+
+  const results: SeedArticle[] = [];
+  for (const entry of entries) {
+    const projectPath = path.join(projectBase, entry.name);
+    const draftPath = path.join(projectPath, "draft.md");
+    if (!fs.existsSync(draftPath)) continue;
+    const draft = fs.readFileSync(draftPath, "utf8");
+    results.push({
+      title: readProjectTitle(projectPath, entry.name),
+      slug: entry.name,
+      status: "draft",
+      review_round: 0,
+      priority: "medium",
+      source: "project-import",
+      target_platforms: ["github"],
+      target_audience: null,
+      core_claim: readProjectSummary(projectPath),
+      estimated_words: estimateWords(draft),
+      project_path: projectPath
+    });
+  }
+
+  return results.sort((a, b) => a.slug.localeCompare(b.slug));
 }
 
 function seedDb() {

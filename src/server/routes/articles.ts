@@ -9,6 +9,8 @@ import {
   ArticleRow,
   PRIORITIES,
   Priority,
+  PLATFORMS,
+  isValidPlatform,
   mapArticle
 } from "../types";
 
@@ -16,13 +18,13 @@ export const articlesRouter = Router();
 
 function normalizePlatforms(input: unknown): string[] {
   if (Array.isArray(input)) {
-    return input.map(String).map((item) => item.trim()).filter(Boolean);
+    return input.map(String).map((item) => item.trim()).filter((p) => p && isValidPlatform(p));
   }
   if (typeof input === "string") {
     return input
       .split(",")
       .map((item) => item.trim())
-      .filter(Boolean);
+      .filter((p) => p && isValidPlatform(p));
   }
   return [];
 }
@@ -50,14 +52,23 @@ function slugFromTitle(title: string) {
 
 /**
  * GET /api/articles
- * Query: status, priority, platform, q
- * Returns every article metadata row, optionally filtered for the MVP board.
+ * Query: status, priority, platform, q, sort, order, page, pageSize
+ * 支持分页、排序和筛选的文章列表
  */
 articlesRouter.get("/", (req, res) => {
   const status = String(req.query.status ?? "");
   const priority = String(req.query.priority ?? "");
   const platform = String(req.query.platform ?? "");
   const q = String(req.query.q ?? "").trim().toLowerCase();
+
+  // 分页参数
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize) || 50));
+
+  // 排序参数
+  const allowedSortFields = ["updated_at", "created_at", "title", "priority", "review_round", "published_at"];
+  const sortField = allowedSortFields.includes(String(req.query.sort)) ? String(req.query.sort) : "updated_at";
+  const sortOrder = String(req.query.order).toLowerCase() === "asc" ? "ASC" : "DESC";
 
   let articles = getArticleRows().map(mapArticle);
   if (ARTICLE_STATUSES.includes(status as ArticleStatus)) {
@@ -78,7 +89,29 @@ articlesRouter.get("/", (req, res) => {
     );
   }
 
-  res.json({ articles });
+  // 排序
+  articles.sort((a, b) => {
+    const aVal = a[sortField as keyof typeof a] ?? "";
+    const bVal = b[sortField as keyof typeof b] ?? "";
+    const cmp = String(aVal).localeCompare(String(bVal));
+    return sortOrder === "ASC" ? cmp : -cmp;
+  });
+
+  // 分页
+  const total = articles.length;
+  const totalPages = Math.ceil(total / pageSize);
+  const offset = (page - 1) * pageSize;
+  const pagedArticles = articles.slice(offset, offset + pageSize);
+
+  res.json({
+    articles: pagedArticles,
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages
+    }
+  });
 });
 
 /**
@@ -88,7 +121,9 @@ articlesRouter.get("/", (req, res) => {
  */
 articlesRouter.post("/", (req, res) => {
   const title = String(req.body.title ?? "").trim();
-  const slug = String(req.body.slug ?? slugFromTitle(title)).trim();
+  // 如果外部显式传入 slug，优先使用；否则从 title 自动生成
+  const rawSlug = req.body.slug != null ? String(req.body.slug).trim() : "";
+  const slug = rawSlug || slugFromTitle(title);
   if (!title || !slug) {
     res.status(400).json({ error: "title 和 slug 为必填项" });
     return;
@@ -191,6 +226,11 @@ articlesRouter.put("/:id", (req, res) => {
   if ("status" in req.body) fields.status = normalizeStatus(req.body.status);
   if ("priority" in req.body) fields.priority = normalizePriority(req.body.priority);
   if ("review_round" in req.body) fields.review_round = Number(req.body.review_round);
+
+  // 当状态改为 published 且尚未有 published_at 时自动填充
+  if (req.body.status === "published" && !article.published_at) {
+    fields.published_at = new Date().toISOString().replace("T", " ").replace(/\.\d+Z$/, "");
+  }
   if ("estimated_words" in req.body) {
     fields.estimated_words = req.body.estimated_words ? Number(req.body.estimated_words) : null;
   }
@@ -282,7 +322,12 @@ articlesRouter.get("/:id/archive", (req, res) => {
     return;
   }
 
-  const archiveDir = path.join(article.project_path ?? "", "archive");
+  if (!article.project_path) {
+    res.status(404).json({ error: "文章没有关联的项目目录，无法查看版本历史" });
+    return;
+  }
+
+  const archiveDir = path.join(article.project_path, "archive");
   if (!fs.existsSync(archiveDir)) {
     res.json({ versions: [] });
     return;
@@ -334,6 +379,65 @@ articlesRouter.post("/:id/publish", (req, res) => {
 });
 
 /**
+ * POST /api/articles/:id/publish/:platform
+ * 逐平台发布：将单个平台标记为 publishing → published
+ */
+articlesRouter.post("/:id/publish/:platform", (req, res) => {
+  const article = getArticleById(Number(req.params.id));
+  if (!article) {
+    res.status(404).json({ error: "文章不存在" });
+    return;
+  }
+
+  const platform = String(req.params.platform);
+  if (!article.target_platforms.includes(platform)) {
+    res.status(400).json({ error: `平台 ${platform} 不在该文章的目标平台列表中` });
+    return;
+  }
+
+  const currentStatus = article.platform_status[platform] ?? "pending";
+  if (currentStatus === "published") {
+    res.status(400).json({ error: `平台 ${platform} 已发布` });
+    return;
+  }
+
+  // 更新单个平台状态为 published
+  const newPlatformStatus = { ...article.platform_status, [platform]: "published" };
+
+  // 检查是否所有平台都已 published
+  const allPublished = article.target_platforms.every(
+    (p) => newPlatformStatus[p] === "published"
+  );
+
+  // 如果有任一平台正在发布，状态为 publishing；全部完成则为 published
+  const anyPublishing = article.target_platforms.some(
+    (p) => newPlatformStatus[p] === "publishing" || newPlatformStatus[p] === "published"
+  );
+  const newArticleStatus = allPublished ? "published" : anyPublishing ? "publishing" : article.status;
+
+  db.prepare(
+    `
+    UPDATE articles
+    SET status = @status,
+        platform_status = @platform_status,
+        published_at = COALESCE(published_at, CURRENT_TIMESTAMP),
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = @id
+  `
+  ).run({
+    id: article.id,
+    status: newArticleStatus,
+    platform_status: JSON.stringify(newPlatformStatus)
+  });
+
+  res.json({
+    article: getArticleById(article.id),
+    platform,
+    platformStatus: newPlatformStatus[platform]
+  });
+});
+
+/**
  * GET /api/articles/:id/publish-status
  * Returns article-level and per-platform publication state.
  */
@@ -372,7 +476,7 @@ articlesRouter.get("/:id/publish-logs", (req, res) => {
 
 /**
  * POST /api/articles/:id/publish-logs
- * Create a publish log entry.
+ * Create a publish log entry and return the complete log object.
  */
 articlesRouter.post("/:id/publish-logs", (req, res) => {
   const article = getArticleById(Number(req.params.id));
@@ -400,5 +504,68 @@ articlesRouter.post("/:id/publish-logs", (req, res) => {
     details: details ? JSON.stringify(details) : null
   });
 
-  res.status(201).json({ logId: Number(result.lastInsertRowid) });
+  // 返回完整的 log 对象
+  const log = db.prepare("SELECT * FROM publish_logs WHERE id = ?").get(Number(result.lastInsertRowid));
+  res.status(201).json({ log });
+});
+
+/**
+ * PUT /api/articles/:id/publish-logs/:logId
+ * 更新 publish log 条目
+ */
+articlesRouter.put("/:id/publish-logs/:logId", (req, res) => {
+  const article = getArticleById(Number(req.params.id));
+  if (!article) {
+    res.status(404).json({ error: "文章不存在" });
+    return;
+  }
+
+  const logId = Number(req.params.logId);
+  const existing = db.prepare("SELECT * FROM publish_logs WHERE id = ? AND article_id = ?").get(logId, article.id) as
+    | Record<string, unknown>
+    | undefined;
+  if (!existing) {
+    res.status(404).json({ error: "发布日志不存在" });
+    return;
+  }
+
+  const fields: Record<string, unknown> = {};
+  const allowedFields = ["stage", "status", "error_code", "message", "retry_count"];
+  for (const field of allowedFields) {
+    if (field in req.body) fields[field] = req.body[field];
+  }
+  if ("details" in req.body) fields.details = JSON.stringify(req.body.details);
+
+  if (Object.keys(fields).length === 0) {
+    res.json({ log: existing });
+    return;
+  }
+
+  const assignments = Object.keys(fields).map((field) => `${field} = @${field}`);
+  db.prepare(
+    `UPDATE publish_logs SET ${assignments.join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE id = @id`
+  ).run({ ...fields, id: logId });
+
+  const log = db.prepare("SELECT * FROM publish_logs WHERE id = ?").get(logId);
+  res.json({ log });
+});
+
+/**
+ * DELETE /api/articles/:id/publish-logs/:logId
+ * 删除 publish log 条目
+ */
+articlesRouter.delete("/:id/publish-logs/:logId", (req, res) => {
+  const article = getArticleById(Number(req.params.id));
+  if (!article) {
+    res.status(404).json({ error: "文章不存在" });
+    return;
+  }
+
+  const logId = Number(req.params.logId);
+  const result = db.prepare("DELETE FROM publish_logs WHERE id = ? AND article_id = ?").run(logId, article.id);
+  if (result.changes === 0) {
+    res.status(404).json({ error: "发布日志不存在" });
+    return;
+  }
+  res.status(204).send();
 });
