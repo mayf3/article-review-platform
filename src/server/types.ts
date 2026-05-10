@@ -1,4 +1,9 @@
-export type ArticleStatus = "draft" | "in_review" | "approved" | "published";
+export type ArticleStatus =
+  | "draft"
+  | "in_review"
+  | "approved"
+  | "publishing"
+  | "published";
 
 export type Priority = "low" | "medium" | "high";
 
@@ -27,8 +32,14 @@ export interface ArticleRow {
 export interface Article
   extends Omit<ArticleRow, "target_platforms" | "platform_status"> {
   target_platforms: string[];
-  platform_status: Record<string, string>;
+  platform_status: PlatformStatusMap;
 }
+
+/** 每个平台的发布状态 */
+export type PlatformStatus = "pending" | "publishing" | "published" | "failed";
+
+/** 平台名称 → 状态的映射 */
+export type PlatformStatusMap = Record<string, PlatformStatus>;
 
 export interface CommentRow {
   id: number;
@@ -78,10 +89,20 @@ export const ARTICLE_STATUSES: ArticleStatus[] = [
   "draft",
   "in_review",
   "approved",
+  "publishing",
   "published"
 ];
 
 export const PRIORITIES: Priority[] = ["low", "medium", "high"];
+
+/** 支持的发布平台名称（统一管理） */
+export const PLATFORMS = ["github", "wechat", "feishu"] as const;
+export type Platform = (typeof PLATFORMS)[number];
+
+/** 校验平台名称是否合法 */
+export function isValidPlatform(name: string): name is Platform {
+  return (PLATFORMS as readonly string[]).includes(name);
+}
 
 export function safeJsonParse<T>(value: string | null | undefined, fallback: T): T {
   if (!value) return fallback;
@@ -96,7 +117,7 @@ export function mapArticle(row: ArticleRow): Article {
   return {
     ...row,
     target_platforms: safeJsonParse<string[]>(row.target_platforms, []),
-    platform_status: safeJsonParse<Record<string, string>>(row.platform_status, {})
+    platform_status: safeJsonParse<PlatformStatusMap>(row.platform_status, {})
   };
 }
 
