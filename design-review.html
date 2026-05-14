@@ -1,0 +1,906 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>文章审阅平台 Design Review</title>
+    <style>
+      :root {
+        --bg: #eef2f5;
+        --panel: #ffffff;
+        --ink: #172026;
+        --muted: #5e6f7d;
+        --line: #d8e0e6;
+        --accent: #1f7a8c;
+        --critical: #b42318;
+        --major: #9a5b00;
+        --minor: #475467;
+        --ok: #087443;
+        --code: #101828;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          "PingFang SC", "Microsoft YaHei", sans-serif;
+        line-height: 1.65;
+        overflow-x: hidden;
+      }
+
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .review-shell {
+        display: grid;
+        grid-template-columns: 280px minmax(0, 1fr);
+        min-height: 100vh;
+        width: 100%;
+        overflow-x: hidden;
+      }
+
+      .side-nav {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow: auto;
+        border-right: 1px solid var(--line);
+        background: #f8fafc;
+        padding: 24px 18px;
+      }
+
+      .side-nav h1 {
+        margin: 0 0 6px;
+        font-size: 18px;
+        line-height: 1.35;
+      }
+
+      .side-nav p {
+        margin: 0 0 18px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .side-nav nav {
+        display: grid;
+        gap: 6px;
+      }
+
+      .side-nav a {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        border-radius: 8px;
+        padding: 8px 10px;
+        color: #344054;
+        font-size: 14px;
+      }
+
+      .side-nav a:hover {
+        background: #e6eef3;
+        text-decoration: none;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 22px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 1px 8px;
+        background: #fff;
+        color: #344054;
+        font-size: 12px;
+        font-weight: 650;
+        white-space: nowrap;
+      }
+
+      .badge.critical {
+        border-color: #f4b7b2;
+        background: #fff3f2;
+        color: var(--critical);
+      }
+
+      .badge.major {
+        border-color: #fedf89;
+        background: #fffaeb;
+        color: var(--major);
+      }
+
+      .badge.minor {
+        border-color: #d0d5dd;
+        background: #f9fafb;
+        color: var(--minor);
+      }
+
+      .badge.ok {
+        border-color: #a6f4c5;
+        background: #ecfdf3;
+        color: var(--ok);
+      }
+
+      main {
+        min-width: 0;
+        max-width: 100%;
+        padding: 28px;
+      }
+
+      section {
+        width: 100%;
+        min-width: 0;
+        max-width: 1180px;
+        margin: 0 auto 20px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        box-shadow: 0 12px 36px rgba(23, 32, 38, 0.05);
+        overflow: hidden;
+      }
+
+      section > header {
+        border-bottom: 1px solid var(--line);
+        padding: 18px 20px;
+      }
+
+      section > header h2 {
+        margin: 0;
+        font-size: 20px;
+      }
+
+      section > header p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .content {
+        min-width: 0;
+        padding: 18px 20px 20px;
+      }
+
+      .grid {
+        min-width: 0;
+        display: grid;
+        gap: 14px;
+      }
+
+      .grid > * {
+        min-width: 0;
+      }
+
+      .grid.cols-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .grid.cols-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .metric {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px;
+        background: #fbfdff;
+      }
+
+      .metric strong {
+        display: block;
+        margin-top: 4px;
+        font-size: 26px;
+        line-height: 1.2;
+      }
+
+      .metric span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .finding {
+        display: grid;
+        gap: 10px;
+        border: 1px solid var(--line);
+        border-left: 5px solid var(--accent);
+        border-radius: 8px;
+        padding: 14px;
+        background: #fff;
+      }
+
+      .finding.critical {
+        border-left-color: var(--critical);
+      }
+
+      .finding.major {
+        border-left-color: var(--major);
+      }
+
+      .finding.minor {
+        border-left-color: var(--minor);
+      }
+
+      .finding h3 {
+        margin: 0;
+        font-size: 16px;
+      }
+
+      .finding p {
+        margin: 0;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        padding: 10px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #f8fafc;
+        color: #344054;
+        font-size: 13px;
+      }
+
+      code {
+        border-radius: 5px;
+        background: #eef4f7;
+        padding: 1px 5px;
+        color: #244653;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.92em;
+        overflow-wrap: anywhere;
+      }
+
+      pre {
+        max-width: 100%;
+        min-width: 0;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        border-radius: 8px;
+        background: var(--code);
+        color: #f2f4f7;
+        padding: 14px;
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      p,
+      td,
+      th,
+      h1,
+      h2,
+      h3,
+      .finding,
+      .metric {
+        overflow-wrap: anywhere;
+      }
+
+      .priority-list {
+        display: grid;
+        gap: 10px;
+        counter-reset: step;
+      }
+
+      .priority-item {
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr);
+        gap: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 12px;
+        background: #fbfdff;
+      }
+
+      .priority-item::before {
+        counter-increment: step;
+        content: counter(step);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 750;
+      }
+
+      .priority-item h3 {
+        margin: 0 0 4px;
+        font-size: 15px;
+      }
+
+      .priority-item p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      @media (max-width: 900px) {
+        .review-shell {
+          display: block;
+          width: 100vw;
+          max-width: 100vw;
+        }
+
+        .side-nav {
+          position: static;
+          height: auto;
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+
+        .side-nav nav {
+          grid-auto-flow: column;
+          grid-auto-columns: max-content;
+          overflow-x: auto;
+          padding-bottom: 4px;
+          max-width: 100%;
+        }
+
+        main {
+          width: 100vw;
+          max-width: 100vw;
+          padding: 16px;
+        }
+
+        section {
+          max-width: calc(100vw - 32px);
+        }
+
+        .content {
+          overflow: hidden;
+        }
+
+        p,
+        td,
+        th,
+        h1,
+        h2,
+        h3 {
+          word-break: break-word;
+        }
+
+        .grid.cols-3,
+        .grid.cols-2 {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="review-shell">
+      <aside class="side-nav">
+        <h1>文章审阅平台评审</h1>
+        <p>Design Review · 2026-05-13 · 基于当前未提交工作树</p>
+        <nav aria-label="评审导航">
+          <a href="#summary">总诊断 <span>1</span></a>
+          <a href="#critical">严重问题 <span>2</span></a>
+          <a href="#major">主要问题 <span>7</span></a>
+          <a href="#minor">细节问题 <span>5</span></a>
+          <a href="#architecture">目录与架构 <span>6</span></a>
+          <a href="#priority">修复优先级 <span>8</span></a>
+          <a href="#evidence">证据 <span>9</span></a>
+          <a href="#risk">实现风险 <span>4</span></a>
+        </nav>
+      </aside>
+
+      <main>
+        <section id="summary">
+          <header>
+            <h2>总诊断</h2>
+            <p>当前产品最大的问题不是单个控件不好看，而是多角色工作流、API 契约、前端信息架构三者没有对齐。</p>
+          </header>
+          <div class="content grid">
+            <div class="grid cols-3">
+              <div class="metric">
+                <span>当前 API 数据</span>
+                <strong>47 篇</strong>
+                <span>草稿 26、审稿中 15、已发布 6</span>
+              </div>
+              <div class="metric">
+                <span>前端可访问主页面</span>
+                <strong>2 个</strong>
+                <span><code>/</code> 和 <code>/articles/:id</code></span>
+              </div>
+              <div class="metric">
+                <span>详情页复杂度</span>
+                <strong>884 行</strong>
+                <span>数据获取、评论、审稿、diff、布局混在一个文件</span>
+              </div>
+            </div>
+
+            <p>
+              目前它已经能作为本地文章看板和阅读器原型使用：中文 UI、状态列、Markdown 阅读、段落评论、审稿问题回复、版本 diff 都有雏形。
+              但从 README 的定位看，它要服务小博、人类用户、文风分析师、发布管家四类角色；实际前端只给了看板和文章详情，审稿队列、发布管理、
+              发布日志、设置、Agent 入口都只能通过 API 或文档访问。这会让“API 优先”变成“只有 API”，人类和 Agent 的协作上下文没有落到界面上。
+            </p>
+
+            <pre>目标工作流:
+小博写稿 -> 文风分析师审稿 -> 人类逐段确认 -> 发布管家多平台发布 -> 回写状态和日志
+
+当前前端:
+看板 -> 文章详情
+     -> 评论/问题/diff 被塞进右侧栏
+     -> 审稿队列、发布队列、日志、设置无页面入口</pre>
+          </div>
+        </section>
+
+        <section id="critical">
+          <header>
+            <h2>严重问题</h2>
+            <p>这些会直接影响产品是否能支撑目标工作流。</p>
+          </header>
+          <div class="content grid">
+            <article class="finding critical">
+              <div class="meta">
+                <span class="badge critical">critical</span>
+                <span class="badge">产品 / 信息架构</span>
+              </div>
+              <h3>多角色工作流没有被前端路由承载，Agent 和发布管家的核心任务被隐藏在 API 里。</h3>
+              <p>
+                README 明确列出小博、人类用户、文风分析师、发布管家四类角色，并要求看板、阅读器、评论、审稿工作流、发布管理和 API 优先。
+                但 <code>src/client/main.tsx:17-20</code> 只注册了看板和文章详情。后端已有 <code>/api/reviews/queue</code>、
+                <code>/publish-status</code>、<code>/publish-logs</code>，前端没有对应队列页或管理页。
+              </p>
+              <p>
+                影响：15 篇 <code>in_review</code> 文章只能散落在看板列中，发布失败排查也只能 curl。协作型产品最关键的“下一步该谁做什么”没有变成第一屏信号。
+              </p>
+              <p>
+                建议：增加稳定 shell 和一级导航：看板、审稿队列、发布队列、文章详情、设置。审稿队列直接对接 <code>/api/reviews/queue</code>，
+                发布队列按 <code>approved/publishing/failed</code> 聚合平台状态和日志。
+              </p>
+            </article>
+
+            <article class="finding critical">
+              <div class="meta">
+                <span class="badge critical">critical</span>
+                <span class="badge">API 契约 / 文档可信度</span>
+              </div>
+              <h3>公开文档、需求文档和真实路由存在多套契约，Agent 按文档集成会踩错接口或状态。</h3>
+              <p>
+                README 写的是 <code>GET /api/articles/:id/content</code> 和 <code>/archive</code>，平台指南写的是 <code>/draft</code> 和
+                <code>/archives</code>，前端调用的是 <code>src/client/api.ts:113-117</code> 的 <code>/draft</code> 和 <code>/archives</code>。
+                后端同时保留 <code>src/server/routes/articles.ts:281-345</code> 的旧 <code>/content</code>/<code>/archive</code>
+                和 <code>src/server/routes/files.ts:17-44</code> 的新 <code>/draft</code>/<code>/archives</code>，返回结构还不一致。
+              </p>
+              <p>
+                影响：这是 API-first 平台的信任问题。文风分析师或发布管家如果照 README 集成，得到的字段形状和前端预期不同，后续 diff、版本选择、任务状态会出错。
+              </p>
+              <p>
+                建议：确定一套 v1 API 契约，旧接口显式标为 deprecated，统一 OpenAPI/typed client/README/平台指南；把状态枚举、平台枚举、verdict 枚举放到共享 contract。
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section id="major">
+          <header>
+            <h2>主要问题</h2>
+            <p>这些不一定马上阻塞，但会持续拉低可用性、可维护性和扩展能力。</p>
+          </header>
+          <div class="content grid">
+            <article class="finding major">
+              <div class="meta">
+                <span class="badge major">major</span>
+                <span class="badge">移动端 UX</span>
+              </div>
+              <h3>移动端出现横向溢出，长标题和 Markdown 首行被截断。</h3>
+              <p>
+                Chrome headless 390×844 截图显示详情页标题只显示左半部分，正文 frontmatter 长行也横向溢出。代码上，
+                <code>src/client/pages/ArticleDetailPage.tsx:792-797</code> 的标题没有强制断词，<code>src/client/styles.css:30-105</code>
+                的 Markdown 样式也没有 <code>overflow-wrap</code> 或 <code>word-break</code> 兜底。
+              </p>
+              <p>
+                建议：在详情页标题、slug、Markdown body、表格、代码和平台 chip 上补 <code>min-width: 0</code>、<code>overflow-wrap: anywhere</code>、
+                表格横向滚动策略；移动端将右侧面板改成真正的底部抽屉或标签视图。
+              </p>
+            </article>
+
+            <article class="finding major">
+              <div class="meta">
+                <span class="badge major">major</span>
+                <span class="badge">数据模型</span>
+              </div>
+              <h3><code>issue_tracking</code> 表存在但没有成为问题追踪的事实来源。</h3>
+              <p>
+                数据库创建了 <code>issue_tracking</code> 表（<code>src/server/db.ts:98-113</code>），README 也宣称有“多轮问题追踪表”。
+                但 <code>GET /api/reviews/issues/:articleId</code> 在 <code>src/server/routes/reviews.ts:181-245</code> 里临时从
+                reviews JSON 聚合；作者响应只更新 reviews 的 <code>issues</code> JSON（<code>src/server/routes/reviews.ts:252-303</code>）。
+              </p>
+              <p>
+                影响：多轮问题追踪难以做稳定 ID、跨轮 merge、历史审计、按问题定位正文。后续一旦出现“同一问题描述变了”或“同一 location 多个问题”，追踪会漂移。
+              </p>
+              <p>
+                建议：要么删掉表并承认 MVP 使用 JSON，要么把 issue 创建、响应、状态变更全部落到 <code>issue_tracking</code>，reviews 只保留审稿快照。
+              </p>
+            </article>
+
+            <article class="finding major">
+              <div class="meta">
+                <span class="badge major">major</span>
+                <span class="badge">前端架构</span>
+              </div>
+              <h3><code>ArticleDetailPage.tsx</code> 是一个 884 行巨型页面，交互状态和展示组件耦合过重。</h3>
+              <p>
+                这个文件同时负责 API 聚合、段落评论、回复、审稿问题响应、版本 diff、移动折叠面板、右侧栏、错误/loading 状态。
+                典型证据是状态集中在 <code>src/client/pages/ArticleDetailPage.tsx:247-273</code>，交互函数延伸到
+                <code>:351-466</code>，面板 JSX 延伸到 <code>:553-730</code>。
+              </p>
+              <p>
+                建议按业务切分：<code>features/articles</code>、<code>features/comments</code>、<code>features/reviews</code>、
+                <code>features/versions</code>。详情页只组合 layout；数据获取放到 hooks；评论线程、审稿问题、版本面板各自独立测试。
+              </p>
+            </article>
+
+            <article class="finding major">
+              <div class="meta">
+                <span class="badge major">major</span>
+                <span class="badge">搜索 / 大数据量</span>
+              </div>
+              <h3>看板搜索看起来是全局搜索，实际只过滤当前已加载页。</h3>
+              <p>
+                <code>api.listArticles</code> 支持 <code>q</code>（<code>src/client/api.ts:89-97</code>），后端也支持分页和搜索。
+                但看板的加载 effect 没有监听 <code>filters.q</code>（<code>src/client/pages/KanbanPage.tsx:47-49</code>），搜索逻辑在
+                <code>:51-59</code> 只过滤本地数组。当前 API 默认 pageSize 是 50，今天数据 47 篇还没暴露；一旦超过 50，搜索会漏结果。
+              </p>
+              <p>
+                建议：明确搜索范围。若是全局搜索，输入 debounce 后调用后端 <code>q</code> 并显示分页/结果数；若是当前页过滤，UI 文案应说“筛选当前列表”。
+              </p>
+            </article>
+
+            <article class="finding major">
+              <div class="meta">
+                <span class="badge major">major</span>
+                <span class="badge">评论体验 / 可访问性</span>
+              </div>
+              <h3>段落级评论只覆盖 <code>p</code> 标签，桌面添加入口依赖 hover，键盘用户难以发现。</h3>
+              <p>
+                <code>MarkdownViewer</code> 只重写 <code>p</code> 渲染（<code>src/client/components/MarkdownViewer.tsx:28-68</code>），标题、列表项、表格、
+                引用、代码块都不能直接评论。桌面“+”按钮在 <code>:47</code> 使用 <code>opacity-0 group-hover</code>，没有清晰的 focus 可见状态。
+                P1 文档要求“任意段落/标题旁边显示 + 按钮”和评论状态流转。
+              </p>
+              <p>
+                建议：用 Markdown AST 为 block node 生成稳定 block id；评论锚点基于 block id + line range，而不是仅 paragraph index。
+                添加常显或 focus-visible 的评论入口，并提供评论状态变更控件。
+              </p>
+            </article>
+
+            <article class="finding major">
+              <div class="meta">
+                <span class="badge major">major</span>
+                <span class="badge">平台模型</span>
+              </div>
+              <h3>平台枚举和真实数据不一致，发布管理会出现“能展示但不能创建/更新”的断层。</h3>
+              <p>
+                API 数据里出现了 <code>zhihu</code>、<code>juejin</code>、<code>csdn</code>、<code>segmentfault</code> 等 18 个平台值。
+                但服务端 <code>PLATFORMS</code> 只允许 <code>github/wechat/feishu</code>（<code>src/server/types.ts:98-105</code>），
+                新建/更新时 <code>normalizePlatforms</code> 会过滤未知平台（<code>src/server/routes/articles.ts:19-30</code>）。
+              </p>
+              <p>
+                建议：把平台定义做成配置表或 settings API，至少区分“发布平台”和“内容分发标签”；前端不要从当前页数据临时推导所有平台选项。
+              </p>
+            </article>
+
+            <article class="finding major">
+              <div class="meta">
+                <span class="badge major">major</span>
+                <span class="badge">性能 / 构建</span>
+              </div>
+              <h3>首屏看板会打包详情页、Markdown 和 highlight.js，生产构建已出现大 chunk 警告。</h3>
+              <p>
+                <code>src/client/main.tsx:4-5</code> 同步导入 Kanban 和 ArticleDetail，<code>MarkdownViewer</code> 又在
+                <code>src/client/components/MarkdownViewer.tsx:1</code> 导入整个 <code>highlight.js</code>。本次 <code>npm run build</code>
+                产出 JS 约 1,354.83 kB，Vite 提示 chunk 超过 500 kB。
+              </p>
+              <p>
+                建议：对 <code>ArticleDetailPage</code> 做 route-level lazy import；按语言注册 highlight.js，或延迟到详情页代码块可见时再加载。
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section id="minor">
+          <header>
+            <h2>细节问题</h2>
+            <p>这些属于体验和工程质量的局部摩擦，修起来成本低。</p>
+          </header>
+          <div class="content">
+            <table>
+              <thead>
+                <tr>
+                  <th>问题</th>
+                  <th>证据</th>
+                  <th>建议</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>开发脚本对端口占用不友好。</td>
+                  <td><code>npm run dev</code> 时 3000 被占用，server 直接抛 <code>EADDRINUSE</code>，client 自动切到 5174。脚本见 <code>scripts/dev.mjs:3-13</code>。</td>
+                  <td>启动前探测 API 端口；支持 <code>PORT=0</code> 或明确复用已有 API；失败时给出可执行提示。</td>
+                </tr>
+                <tr>
+                  <td>删除文章使用 <code>window.confirm</code>，缺少上下文和可恢复机制。</td>
+                  <td><code>src/client/pages/KanbanPage.tsx:112-119</code>。</td>
+                  <td>用项目内 modal，明确“只删元数据、不删 draft.md”，并提供撤销或删除后 toast。</td>
+                </tr>
+                <tr>
+                  <td>图标按钮和筛选控件的可访问性不稳定。</td>
+                  <td>卡片删除按钮只有 <code>title</code>（<code>src/client/components/ArticleCard.tsx:44-50</code>），多个 <code>select</code> 依赖相邻文案或 title。</td>
+                  <td>补 <code>aria-label</code>、显式 <code>label</code>、focus-visible 样式。</td>
+                </tr>
+                <tr>
+                  <td>状态流转没有业务约束。</td>
+                  <td>卡片里的状态下拉允许任意状态切换（<code>src/client/components/ArticleCard.tsx:87-98</code>）。</td>
+                  <td>至少对发布中/已发布做确认，或显示合法下一步动作按钮。</td>
+                </tr>
+                <tr>
+                  <td>类型和后端参数里仍有逃逸口。</td>
+                  <td><code>@ts-ignore</code> 出现在 <code>src/server/routes/comments.ts:24-39</code>；<code>any</code> 出现在 <code>src/server/routes/reviews.ts:210</code>、<code>:267</code>。</td>
+                  <td>给 Express params 和 request body 加局部类型或 schema 校验。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="architecture">
+          <header>
+            <h2>目录与架构</h2>
+            <p>当前目录清晰但还停留在“按技术层分文件”的 MVP 形态，业务边界没有显式化。</p>
+          </header>
+          <div class="content grid">
+            <table>
+              <thead>
+                <tr>
+                  <th>目录/文件</th>
+                  <th>当前职责</th>
+                  <th>评审判断</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>src/client/pages</code></td>
+                  <td>看板和详情页。</td>
+                  <td>页面少但详情页过重。缺 <code>ReviewQueuePage</code>、<code>PublishingPage</code>、<code>SettingsPage</code>。</td>
+                </tr>
+                <tr>
+                  <td><code>src/client/components</code></td>
+                  <td>卡片、表单、Markdown、diff、状态 badge。</td>
+                  <td>组件按 UI 类型堆放，评论/审稿/版本没有 feature ownership。</td>
+                </tr>
+                <tr>
+                  <td><code>src/client/api.ts</code></td>
+                  <td>手写 typed REST client。</td>
+                  <td>方向对，但缺共享 contract，和 README/API route 漂移。</td>
+                </tr>
+                <tr>
+                  <td><code>src/server/routes</code></td>
+                  <td>文章、评论、审稿、文件、设置。</td>
+                  <td><code>articles.ts</code> 已到 571 行，混入 publish、publish logs、旧 content/archive。</td>
+                </tr>
+                <tr>
+                  <td><code>src/server/db.ts</code></td>
+                  <td>schema、seed、文章发现、查询 helper。</td>
+                  <td>初始化和业务导入混在一起；后续迁移、测试隔离会困难。</td>
+                </tr>
+                <tr>
+                  <td><code>docs/</code>、<code>README.md</code>、<code>TASK.md</code></td>
+                  <td>产品目标、P1 要求、Agent 使用指南。</td>
+                  <td>文档信息量足，但接口和状态描述没有单一事实来源。</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <pre>建议的前端结构:
+src/client/
+  app/
+    router.tsx
+    AppShell.tsx
+  features/
+    articles/
+      KanbanPage.tsx
+      ArticleCard.tsx
+      articleApi.ts
+    article-detail/
+      ArticleDetailPage.tsx
+      ArticleHeader.tsx
+      useArticleDetail.ts
+    comments/
+      CommentThread.tsx
+      CommentAnchor.tsx
+    reviews/
+      ReviewQueuePage.tsx
+      ReviewIssuePanel.tsx
+    publishing/
+      PublishingQueuePage.tsx
+      PublishLogPanel.tsx
+  shared/
+    api/request.ts
+    ui/
+    contracts/
+
+建议的后端结构:
+src/server/
+  contracts/
+  db/
+    schema.ts
+    migrations/
+    repositories/
+  routes/
+    articles.ts
+    articleFiles.ts
+    comments.ts
+    reviews.ts
+    publishing.ts
+  services/
+    markdown.ts
+    diff.ts
+    issueTracking.ts</pre>
+          </div>
+        </section>
+
+        <section id="priority">
+          <header>
+            <h2>修复优先级</h2>
+            <p>按最小投入、最大收益排序。</p>
+          </header>
+          <div class="content priority-list">
+            <div class="priority-item">
+              <div>
+                <h3>先统一 API 和状态契约。</h3>
+                <p>冻结 <code>/draft</code>/<code>/archives</code> 或旧接口的去留，同步 README、平台指南、前端 api client、测试。否则后续页面越做越偏。</p>
+              </div>
+            </div>
+            <div class="priority-item">
+              <div>
+                <h3>补全 AppShell 和一级导航。</h3>
+                <p>新增审稿队列和发布队列入口，把 15 个待审任务、发布日志、失败状态变成可见工作流。</p>
+              </div>
+            </div>
+            <div class="priority-item">
+              <div>
+                <h3>修移动端横向溢出。</h3>
+                <p>这是可见质量问题，优先处理标题、Markdown、表格、代码块、平台 chip 和看板卡片。</p>
+              </div>
+            </div>
+            <div class="priority-item">
+              <div>
+                <h3>把 <code>ArticleDetailPage</code> 拆成 feature 组件和 hooks。</h3>
+                <p>先不大重构全项目，只拆详情页的评论、审稿、版本三个面板，收益最大。</p>
+              </div>
+            </div>
+            <div class="priority-item">
+              <div>
+                <h3>决定问题追踪的事实来源。</h3>
+                <p>若保留 <code>issue_tracking</code>，就让所有审稿和响应都写入它；若不保留，删表和文档承诺。</p>
+              </div>
+            </div>
+            <div class="priority-item">
+              <div>
+                <h3>修搜索语义和分页。</h3>
+                <p>把搜索变成后端全局搜索，或明确标注当前页过滤。</p>
+              </div>
+            </div>
+            <div class="priority-item">
+              <div>
+                <h3>路由级代码分割。</h3>
+                <p>懒加载详情页和 Markdown/highlight 依赖，消掉首屏大 chunk。</p>
+              </div>
+            </div>
+            <div class="priority-item">
+              <div>
+                <h3>补可访问性和低成本交互 polish。</h3>
+                <p>aria-label、focus-visible、删除确认 modal、状态流转确认、空态下一步动作。</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="evidence">
+          <header>
+            <h2>证据</h2>
+            <p>本次评审实际运行和检查过的内容。</p>
+          </header>
+          <div class="content">
+            <table>
+              <thead>
+                <tr>
+                  <th>类型</th>
+                  <th>结果</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>代码结构</td>
+                  <td><code>src/client</code> 约 1716 行，<code>src/server</code> 约 2348 行；详情页单文件 884 行，文章路由 571 行。</td>
+                </tr>
+                <tr>
+                  <td>API 数据</td>
+                  <td><code>GET /api/articles</code> 返回 47 篇；草稿 26、审稿中 15、已发布 6；平台值 18 个。</td>
+                </tr>
+                <tr>
+                  <td>审稿队列</td>
+                  <td><code>GET /api/reviews/queue</code> 返回 15 个任务，但前端无独立页面。</td>
+                </tr>
+                <tr>
+                  <td>视觉截图</td>
+                  <td>使用系统 Chrome headless 截取了 1440×1000 和 390×844 的看板/详情页。移动详情页可见横向截断。</td>
+                </tr>
+                <tr>
+                  <td>类型检查</td>
+                  <td><code>npm run typecheck</code> 通过。</td>
+                </tr>
+                <tr>
+                  <td>测试</td>
+                  <td><code>npm test</code> 通过，1 个测试文件、13 个测试。</td>
+                </tr>
+                <tr>
+                  <td>构建</td>
+                  <td><code>npm run build</code> 通过；Vite 警告 JS chunk 1,354.83 kB 超过 500 kB。</td>
+                </tr>
+                <tr>
+                  <td>开发服务</td>
+                  <td>本地 3000 已有项目 API；<code>npm run dev</code> 的 server 子进程因 <code>EADDRINUSE</code> 失败，client 自动使用 5174。</td>
+                </tr>
+                <tr>
+                  <td>工作树状态</td>
+                  <td>评审基于未提交工作树；<code>ArticleDetailPage.tsx</code> 当前是 untracked 文件，多个前后端文件已有修改。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="risk">
+          <header>
+            <h2>实现风险</h2>
+            <p>后续迭代最容易出问题的地方。</p>
+          </header>
+          <div class="content grid cols-2">
+            <div class="finding">
+              <h3>数据迁移风险</h3>
+              <p>SQLite schema 直接在 <code>initDb</code> 里创建，缺 migration 版本。已有本地数据 47 篇，后续 schema 改动需要明确迁移策略。</p>
+            </div>
+            <div class="finding">
+              <h3>协作契约风险</h3>
+              <p>Agent 通过文档和 REST API 操作平台。只要 README、平台指南、前端 client、后端 route 不一致，失败会发生在人工难发现的位置。</p>
+            </div>
+            <div class="finding">
+              <h3>长内容风险</h3>
+              <p>真实文章含 frontmatter、长英文 tag、表格、代码块和多平台 chip。当前移动端已经溢出，后续评论锚点也会受 Markdown block 解析影响。</p>
+            </div>
+            <div class="finding">
+              <h3>范围膨胀风险</h3>
+              <p>发布管理、审稿触发、评论状态、历史恢复、设置页都在待办里。若继续把所有交互塞进详情页，会快速失控。</p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

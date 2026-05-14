@@ -136,6 +136,7 @@ describe("P0-4: platform_status 类型约束", () => {
       review_round: 0,
       project_path: null,
       priority: "medium",
+      complexity: null,
       source: "user-request",
       target_platforms: '["github","wechat"]',
       platform_status: '{"github":"pending","wechat":"published"}',
@@ -158,7 +159,7 @@ describe("P0-4: platform_status 类型约束", () => {
   it("空 platform_status 应返回空对象", () => {
     const row: ArticleRow = {
       id: 1, title: "T", slug: "t", status: "draft", review_round: 0,
-      project_path: null, priority: "medium", source: "user-request",
+      project_path: null, priority: "medium", complexity: null, source: "user-request",
       target_platforms: "[]", platform_status: "{}",
       feishu_url: null, github_url: null, wechat_draft_url: null,
       created_at: "", updated_at: "", published_at: null,

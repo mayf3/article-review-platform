@@ -1,4 +1,4 @@
-export type ArticleStatus = "draft" | "in_review" | "approved" | "published";
+export type ArticleStatus = "draft" | "in_review" | "approved" | "publishing" | "published";
 export type Priority = "low" | "medium" | "high";
 
 export interface Article {
@@ -49,6 +49,50 @@ export interface ArchiveVersion {
   size: number;
 }
 
+export interface Comment {
+  id: number;
+  article_id: number;
+  paragraph_index: number | null;
+  line_start: number | null;
+  line_end: number | null;
+  text: string;
+  author: string;
+  type: string;
+  status: string;
+  reply_to: number | null;
+  created_at: string;
+}
+
+export type ReviewIssueSeverity = "low" | "medium" | "high";
+export type ReviewIssueStatus = "new" | "unresolved" | "resolved" | "wontfix" | "in-progress";
+export type ReviewResponseAction = "accepted" | "rejected" | "partial";
+
+export interface ReviewIssue {
+  location: string;
+  description: string;
+  suggestion: string;
+  severity: ReviewIssueSeverity;
+  status: ReviewIssueStatus;
+  author_response?: {
+    action: ReviewResponseAction;
+    reason: string;
+  };
+}
+
+export interface Review {
+  id: number;
+  article_id: number;
+  round: number;
+  score: number | null;
+  verdict: string | null;
+  issues: ReviewIssue[];
+  style_violations: unknown[];
+  reviewer: string;
+  source: string;
+  created_at: string;
+  article?: Article | null;
+}
+
 export type DiffLineType = "context" | "added" | "removed";
 
 export interface DiffLine {
@@ -69,6 +113,7 @@ export const ARTICLE_STATUSES: ArticleStatus[] = [
   "draft",
   "in_review",
   "approved",
+  "publishing",
   "published"
 ];
 
@@ -76,6 +121,7 @@ export const STATUS_LABELS: Record<ArticleStatus, string> = {
   draft: "草稿",
   in_review: "审稿中",
   approved: "已通过",
+  publishing: "发布中",
   published: "已发布"
 };
 

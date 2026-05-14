@@ -7,6 +7,10 @@ export type ArticleStatus =
 
 export type Priority = "low" | "medium" | "high";
 
+export type Complexity = "simple" | "medium" | "complex";
+
+export const COMPLEXITIES: Complexity[] = ["simple", "medium", "complex"];
+
 export interface ArticleRow {
   id: number;
   title: string;
@@ -15,6 +19,7 @@ export interface ArticleRow {
   review_round: number;
   project_path: string | null;
   priority: Priority;
+  complexity: Complexity | null;
   source: string;
   target_platforms: string;
   platform_status: string;

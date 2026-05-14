@@ -6,6 +6,8 @@ import {
   ArticleRow,
   ArticleStatus,
   CommentRow,
+  Complexity,
+  COMPLEXITIES,
   Priority,
   ReviewRow,
   mapArticle,
@@ -54,6 +56,7 @@ export function initDb() {
       review_round INTEGER DEFAULT 0,
       project_path TEXT,
       priority TEXT DEFAULT 'medium',
+      complexity TEXT DEFAULT NULL,
       source TEXT DEFAULT 'user-request',
       target_platforms TEXT DEFAULT '[]',
       platform_status TEXT DEFAULT '{}',
@@ -128,6 +131,7 @@ export function initDb() {
   `);
 
   normalizeLegacyStatuses();
+  addComplexityColumn();
   seedDb();
 }
 
@@ -186,6 +190,14 @@ function normalizeLegacyStatuses() {
     "UPDATE articles SET status = 'draft' WHERE status IN ('backlog', 'outlined', 'drafting')"
   ).run();
   // 不再把 publishing 映射为 published，publishing 是合法的中间状态
+}
+
+function addComplexityColumn() {
+  // Safely add complexity column if it doesn't exist (SQLite ALTER TABLE)
+  const cols = db.prepare("PRAGMA table_info(articles)").all() as Array<{ name: string }>;
+  if (!cols.some((c) => c.name === "complexity")) {
+    db.exec("ALTER TABLE articles ADD COLUMN complexity TEXT DEFAULT NULL");
+  }
 }
 
 function titleFromSlug(slug: string) {

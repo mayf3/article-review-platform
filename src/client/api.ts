@@ -2,9 +2,12 @@ import {
   ArchiveVersion,
   Article,
   ArticleStatus,
+  Comment,
   DiffLine,
   DraftResponse,
   Priority,
+  Review,
+  ReviewResponseAction,
   SettingsResponse,
   VersionResponse
 } from "./types";
@@ -32,6 +35,23 @@ export interface ArticlePayload {
   target_audience?: string | null;
   core_claim?: string | null;
   estimated_words?: number | null;
+}
+
+export interface CommentPayload {
+  paragraph_index?: number | null;
+  line_start?: number | null;
+  line_end?: number | null;
+  text: string;
+  author?: string;
+  type?: string;
+  status?: string;
+  reply_to?: number | null;
+}
+
+export interface ReviewIssueResponsePayload {
+  issue_index: number;
+  action: ReviewResponseAction;
+  reason: string;
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -99,6 +119,20 @@ export const api = {
     request<{ from: string; to: string; diff: DiffLine[] }>(
       withQuery(`/api/articles/${id}/diff`, { from, to })
     ),
+  listComments: (articleId: number) =>
+    request<{ comments: Comment[] }>(`/api/articles/${articleId}/comments`),
+  createComment: (articleId: number, payload: CommentPayload) =>
+    request<{ comment: Comment | null }>(`/api/articles/${articleId}/comments`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+  listReviews: (articleId: number) =>
+    request<{ reviews: Review[] }>(withQuery("/api/reviews", { article_id: String(articleId) })),
+  respondToReview: (reviewId: number, responses: ReviewIssueResponsePayload[]) =>
+    request<{ review: Review; respondedCount: number }>(`/api/reviews/${reviewId}/respond`, {
+      method: "POST",
+      body: JSON.stringify({ responses })
+    }),
   publishArticle: (id: number) =>
     request<{ article: Article; publishStatus: Record<string, string> }>(
       `/api/articles/${id}/publish`,

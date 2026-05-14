@@ -3,7 +3,7 @@ import { db, getArticleById, getCommentRows } from "../db";
 import { CommentRow } from "../types";
 
 export const articleCommentsRouter = Router({ mergeParams: true });
-export const commentsRouter = Router();
+export const commentsRouter = Router({ mergeParams: true });
 
 function normalizeComment(row: CommentRow) {
   return {
@@ -22,6 +22,7 @@ function normalizeComment(row: CommentRow) {
 }
 
 articleCommentsRouter.get("/", (req, res) => {
+  // @ts-ignore - mergeParams makes articleId available at runtime
   const articleId = Number(req.params.articleId);
   const article = getArticleById(articleId);
   if (!article) {
@@ -34,6 +35,7 @@ articleCommentsRouter.get("/", (req, res) => {
 });
 
 articleCommentsRouter.post("/", (req, res) => {
+  // @ts-ignore - mergeParams makes articleId available at runtime
   const articleId = Number(req.params.articleId);
   const article = getArticleById(articleId);
   if (!article) {
