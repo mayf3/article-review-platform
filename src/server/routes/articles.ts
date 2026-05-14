@@ -7,6 +7,8 @@ import {
   ARTICLE_STATUSES,
   ArticleStatus,
   ArticleRow,
+  COMPLEXITIES,
+  Complexity,
   PRIORITIES,
   Priority,
   PLATFORMS,
@@ -37,6 +39,11 @@ function normalizeStatus(input: unknown): ArticleStatus {
   return ARTICLE_STATUSES.includes(input as ArticleStatus) ? (input as ArticleStatus) : "draft";
 }
 
+function normalizeComplexity(input: unknown): Complexity | null {
+  if (input == null || input === "") return null;
+  return COMPLEXITIES.includes(input as Complexity) ? (input as Complexity) : null;
+}
+
 function defaultPlatformStatus(platforms: string[]) {
   return Object.fromEntries(platforms.map((platform) => [platform, "pending"]));
 }
@@ -59,6 +66,7 @@ articlesRouter.get("/", (req, res) => {
   const status = String(req.query.status ?? "");
   const priority = String(req.query.priority ?? "");
   const platform = String(req.query.platform ?? "");
+  const complexity = String(req.query.complexity ?? "");
   const q = String(req.query.q ?? "").trim().toLowerCase();
 
   // 分页参数
@@ -76,6 +84,9 @@ articlesRouter.get("/", (req, res) => {
   }
   if (PRIORITIES.includes(priority as never)) {
     articles = articles.filter((article) => article.priority === priority);
+  }
+  if (COMPLEXITIES.includes(complexity as Complexity)) {
+    articles = articles.filter((article) => article.complexity === complexity);
   }
   if (platform) {
     articles = articles.filter((article) => article.target_platforms.includes(platform));
@@ -142,12 +153,12 @@ articlesRouter.post("/", (req, res) => {
       .prepare(
         `
         INSERT INTO articles (
-          title, slug, status, review_round, project_path, priority, source,
+          title, slug, status, review_round, project_path, priority, complexity, source,
           target_platforms, platform_status, feishu_url, github_url, wechat_draft_url,
           target_audience, core_claim, estimated_words
         )
         VALUES (
-          @title, @slug, @status, @review_round, @project_path, @priority, @source,
+          @title, @slug, @status, @review_round, @project_path, @priority, @complexity, @source,
           @target_platforms, @platform_status, @feishu_url, @github_url, @wechat_draft_url,
           @target_audience, @core_claim, @estimated_words
         )
@@ -160,6 +171,7 @@ articlesRouter.post("/", (req, res) => {
         review_round: Number(req.body.review_round ?? 0),
         project_path: projectPath,
         priority: normalizePriority(req.body.priority),
+        complexity: normalizeComplexity(req.body.complexity),
         source: String(req.body.source ?? "user-request"),
         target_platforms: JSON.stringify(targetPlatforms),
         platform_status: JSON.stringify(defaultPlatformStatus(targetPlatforms)),
@@ -225,6 +237,7 @@ articlesRouter.put("/:id", (req, res) => {
   }
   if ("status" in req.body) fields.status = normalizeStatus(req.body.status);
   if ("priority" in req.body) fields.priority = normalizePriority(req.body.priority);
+  if ("complexity" in req.body) fields.complexity = normalizeComplexity(req.body.complexity);
   if ("review_round" in req.body) fields.review_round = Number(req.body.review_round);
 
   // 当状态改为 published 且尚未有 published_at 时自动填充

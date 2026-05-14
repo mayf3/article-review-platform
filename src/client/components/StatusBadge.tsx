@@ -4,6 +4,7 @@ const toneByStatus: Record<ArticleStatus, string> = {
   draft: "border-slate-300 bg-slate-100 text-slate-700",
   in_review: "border-amber-300 bg-amber-50 text-amber-800",
   approved: "border-emerald-300 bg-emerald-50 text-emerald-800",
+  publishing: "border-sky-300 bg-sky-50 text-sky-800",
   published: "border-teal-300 bg-teal-50 text-teal-800"
 };
 

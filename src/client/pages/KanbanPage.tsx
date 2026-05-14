@@ -237,7 +237,7 @@ export function KanbanPage({ onOpenArticle }: KanbanPageProps) {
           正在加载文章列表...
         </div>
       ) : (
-        <section className="grid gap-4 lg:grid-cols-4">
+        <section className="grid gap-4 lg:grid-cols-3 xl:grid-cols-5">
           {ARTICLE_STATUSES.map((status) => (
             <div key={status} className="min-w-0 rounded-lg border border-line bg-slate-50">
               <div className="flex items-center justify-between border-b border-line px-3 py-3">
