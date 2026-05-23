@@ -1,0 +1,99 @@
+.kanbanPage {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.toolbar .searchInput {
+  width: 240px;
+}
+
+.columns {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.column {
+  flex: 1;
+  min-width: 260px;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+}
+
+.columnHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+}
+
+.cardList {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.articleCard {
+  cursor: pointer;
+  border-radius: 8px;
+  transition: box-shadow 0.2s;
+}
+
+.articleCard:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.cardTitle {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #999;
+}
+
+.emptyColumn {
+  padding: 20px;
+  text-align: center;
+  color: #ccc;
+  font-size: 13px;
+  border: 1px dashed #e8e8e8;
+  border-radius: 8px;
+}

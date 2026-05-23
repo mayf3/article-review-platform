@@ -5,6 +5,7 @@ import { articleCommentsRouter, commentsRouter } from "./routes/comments";
 import { filesRouter } from "./routes/files";
 import { reviewsRouter } from "./routes/reviews";
 import { settingsRouter } from "./routes/settings";
+import { ttsRouter } from "./routes/tts";
 
 const app = express();
 const port = Number(process.env.PORT ?? 3000);
@@ -25,6 +26,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api/settings", settingsRouter);
+app.use("/api/tts", ttsRouter);
 app.use("/api/reviews", reviewsRouter);
 app.use("/api/comments", commentsRouter);
 app.use("/api/articles/:articleId/comments", articleCommentsRouter);
