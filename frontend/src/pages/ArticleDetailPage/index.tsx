@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Tabs, Button, Spin, Typography } from 'antd';
 import {
   ArrowLeftOutlined,
+  BranchesOutlined,
   CommentOutlined,
   AlertOutlined,
   HistoryOutlined,
@@ -85,6 +86,14 @@ const ArticleDetailPage: React.FC = () => {
           >
             返回
           </Button>
+          {article && (
+            <Button
+              icon={<BranchesOutlined />}
+              onClick={() => navigate(`/articles/${articleId}/argument-map`)}
+            >
+              逻辑地图
+            </Button>
+          )}
           <div className={styles.detailTitle}>
             <Typography.Title level={4} style={{ margin: 0 }}>
               {article?.title || '文章详情'}
