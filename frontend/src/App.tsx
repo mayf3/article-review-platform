@@ -9,6 +9,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 const ReviewQueuePage = lazy(() => import('./pages/ReviewQueuePage'));
 const ArticleDetailPage = lazy(() => import('./pages/ArticleDetailPage'));
+const ArgumentMapPage = lazy(() => import('./pages/ArgumentMapPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,6 +38,7 @@ const App: React.FC = () => {
                     <Route path="/" element={<KanbanPage />} />
                     <Route path="/review-queue" element={<ReviewQueuePage />} />
                     <Route path="/articles/:id" element={<ArticleDetailPage />} />
+                    <Route path="/articles/:id/argument-map" element={<ArgumentMapPage />} />
                   </Routes>
                 </Suspense>
               </Layout>
