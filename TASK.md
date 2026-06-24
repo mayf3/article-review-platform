@@ -135,8 +135,8 @@ CREATE TABLE reviews (
 
 ## Important
 - Server starts on port 3456
-- Default article projects path: /Users/yanfenma/.openclaw/groups/workspace-oc_21ced618ce1acc9ff4d76aa2aabde473/docs/projects/
-- Make the path configurable via env var ARTICLES_PATH
+- Default article projects path: `$ARTICLES_PATH` or `./docs/projects/` (relative to project root)
+- Configurable via env var `ARTICLES_PATH`
 - Seed database with 2-3 sample articles on first run
 - UI should be in Chinese (labels, buttons, status text)
 - Clean, modern UI with Tailwind CSS

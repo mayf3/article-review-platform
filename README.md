@@ -33,7 +33,7 @@
 
 ## 需求文档
 
-详细需求见：`~/.openclaw/groups/workspace-oc_21ced618ce1acc9ff4d76aa2aabde473/docs/platform-requirements.md`
+详细需求见：`$ARTICLES_PATH/../platform-requirements.md`（或由 ARTICLES_PATH 环境变量配置的路径）
 
 ## 开发阶段
 
@@ -46,8 +46,8 @@
 
 ## 数据来源
 
-- 文章内容：`~/.openclaw/groups/workspace-oc_21ced618ce1acc9ff4d76aa2aabde473/docs/projects/`
-- 博客工作区：`~/.openclaw/groups/workspace-oc_21ced618ce1acc9ff4d76aa2aabde473/`
+- 文章内容：`$ARTICLES_PATH/`（可通过环境变量 ARTICLES_PATH 配置）
+- 博客工作区：`$ARTICLES_PATH/../`（由 ARTICLES_PATH 所在目录决定）
 
 ## 项目状态
 
@@ -93,3 +93,4 @@
 ---
 
 *创建于 2026-05-08 by 小博*
+ 2026-05-08 by 小博*
