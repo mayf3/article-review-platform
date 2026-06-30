@@ -101,7 +101,15 @@ export const ARTICLE_STATUSES: ArticleStatus[] = [
 export const PRIORITIES: Priority[] = ["low", "medium", "high"];
 
 /** 支持的发布平台名称（统一管理） */
-export const PLATFORMS = ["github", "wechat", "feishu"] as const;
+export const PLATFORMS = [
+  // 中文平台
+  "github", "wechat", "feishu",
+  "zhihu", "jianshu", "segmentfault", "juejin", "csdn", "oschina",
+  "toutiao", "infoq", "51cto", "shaoshupai", "w2solo",
+  // 英文平台
+  "devto", "medium", "linkedin", "hashnode", "hackernoon",
+  "substack"
+] as const;
 export type Platform = (typeof PLATFORMS)[number];
 
 /** 校验平台名称是否合法 */

@@ -34,6 +34,18 @@ const PLATFORM_OPTIONS = [
   { value: 'github', label: 'GitHub' },
   { value: 'wechat', label: '微信' },
   { value: 'feishu', label: '飞书' },
+  { value: 'zhihu', label: '知乎' },
+  { value: 'jianshu', label: '简书' },
+  { value: 'segmentfault', label: 'SegmentFault' },
+  { value: 'juejin', label: '掘金' },
+  { value: 'csdn', label: 'CSDN' },
+  { value: 'oschina', label: '开源中国' },
+  { value: 'devto', label: 'Dev.to' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'linkedin', label: 'LinkedIn' },
+  { value: 'hashnode', label: 'Hashnode' },
+  { value: 'hackernoon', label: 'HackerNoon' },
+  { value: 'substack', label: 'Substack' },
 ];
 
 const COMPLEXITY_OPTIONS: { value: Complexity; label: string }[] = [

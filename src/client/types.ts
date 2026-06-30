@@ -131,6 +131,21 @@ export const PRIORITY_LABELS: Record<Priority, string> = {
   low: "低"
 };
 
+/**
+ * 获取状态当前可流转到的下一级状态列表（前端看板下拉框用）
+ * 防止直接跳过审稿阶段变为"发布中"或"已发布"
+ */
+export function getNextStatuses(current: ArticleStatus): ArticleStatus[] {
+  const transitions: Record<ArticleStatus, ArticleStatus[]> = {
+    draft: ["in_review"],
+    in_review: ["approved", "draft"],
+    approved: ["publishing", "in_review"],
+    publishing: ["published", "approved"],
+    published: []
+  };
+  return [current, ...(transitions[current] ?? [])];
+}
+
 export const PLATFORM_LABELS: Record<string, string> = {
   github: "GitHub",
   wechat: "微信",
