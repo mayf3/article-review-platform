@@ -15,6 +15,7 @@ import {
   isValidPlatform,
   mapArticle
 } from "../types";
+import { isValidTransition } from "../services/status-transitions";
 
 export const articlesRouter = Router();
 
@@ -235,7 +236,18 @@ articlesRouter.put("/:id", (req, res) => {
   for (const field of stringFields) {
     if (field in req.body) fields[field] = req.body[field] ?? null;
   }
-  if ("status" in req.body) fields.status = normalizeStatus(req.body.status);
+  if ("status" in req.body) {
+    const newStatus = normalizeStatus(req.body.status);
+    if (!isValidTransition(article.status, newStatus)) {
+      res.status(422).json({
+        error: `非法状态流转：${article.status} → ${newStatus}。允许的流转路径：draft → in_review → approved → publishing → published`,
+        currentStatus: article.status,
+        requestedStatus: newStatus
+      });
+      return;
+    }
+    fields.status = newStatus;
+  }
   if ("priority" in req.body) fields.priority = normalizePriority(req.body.priority);
   if ("complexity" in req.body) fields.complexity = normalizeComplexity(req.body.complexity);
   if ("review_round" in req.body) fields.review_round = Number(req.body.review_round);

@@ -1,11 +1,11 @@
 import { CalendarDays, FileText, Trash2 } from "lucide-react";
 import {
-  ARTICLE_STATUSES,
   Article,
   ArticleStatus,
   PLATFORM_LABELS,
   PRIORITY_LABELS,
-  STATUS_LABELS
+  STATUS_LABELS,
+  getNextStatuses
 } from "../types";
 import { StatusBadge } from "./StatusBadge";
 
@@ -85,12 +85,13 @@ export function ArticleCard({ article, onOpen, onStatusChange, onDelete }: Artic
           <span className="truncate">{formatDate(article.updated_at)}</span>
         </div>
         <select
-          className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:border-accent focus:outline-none"
+          className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           value={article.status}
           onChange={(event) => onStatusChange(article, event.target.value as ArticleStatus)}
-          title="更新状态"
+          title={article.status === "published" ? "已发布的文章不能回退" : "更新状态"}
+          disabled={article.status === "published"}
         >
-          {ARTICLE_STATUSES.map((status) => (
+          {getNextStatuses(article.status).map((status) => (
             <option key={status} value={status}>
               {STATUS_LABELS[status]}
             </option>
