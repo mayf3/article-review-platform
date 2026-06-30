@@ -123,6 +123,18 @@ export const PLATFORM_LABELS: Record<string, string> = {
   github: 'GitHub',
   wechat: '微信',
   feishu: '飞书',
+  zhihu: '知乎',
+  jianshu: '简书',
+  segmentfault: 'SegmentFault',
+  juejin: '掘金',
+  csdn: 'CSDN',
+  oschina: '开源中国',
+  devto: 'Dev.to',
+  medium: 'Medium',
+  linkedin: 'LinkedIn',
+  hashnode: 'Hashnode',
+  hackernoon: 'HackerNoon',
+  substack: 'Substack',
 };
 
 export const STATUS_COLORS: Record<ArticleStatus, string> = {

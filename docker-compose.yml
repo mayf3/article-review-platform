@@ -1,0 +1,10 @@
+services:
+  article-review:
+    build: .
+    container_name: article-review
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    mem_limit: 128m
+    volumes:
+      - ./data:/app/data

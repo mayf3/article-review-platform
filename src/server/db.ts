@@ -156,7 +156,7 @@ const fallbackSeedArticles: Array<Omit<SeedArticle, "source" | "project_path">> 
     status: "in_review",
     review_round: 1,
     priority: "high",
-    target_platforms: ["github", "wechat", "feishu"],
+    target_platforms: ["zhihu","jianshu","segmentfault","juejin","csdn","oschina","devto","medium","linkedin","hashnode","github","hackernoon","substack","wechat"],
     target_audience: "正在搭建 AI 写作流程的内容团队",
     core_claim: "稳定的 AI 写作系统依赖清晰的输入输出和可审计审稿流程。",
     estimated_words: 1600

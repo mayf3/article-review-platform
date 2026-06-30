@@ -1,0 +1,9 @@
+node_modules
+frontend/node_modules
+data/tts/*
+dist
+.git
+.gitignore
+*.log
+.env
+.DS_Store
