@@ -1,4 +1,5 @@
 import express from "express";
+import { apiSecurity, resolveSecurityConfig } from "./security";
 import { initDb } from "./db";
 import { articlesRouter } from "./routes/articles";
 import { articleCommentsRouter, commentsRouter } from "./routes/comments";
@@ -9,17 +10,12 @@ import { ttsRouter } from "./routes/tts";
 
 const app = express();
 const port = Number(process.env.PORT ?? 3000);
+const security = resolveSecurityConfig(process.env);
 
 initDb();
 
 app.use(express.json({ limit: "2mb" }));
-app.use((_req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-  next();
-});
-app.options("*", (_req, res) => res.sendStatus(204));
+app.use("/api", apiSecurity(security));
 
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true, serverPort: port });
@@ -42,6 +38,6 @@ app.use((error: unknown, _req: express.Request, res: express.Response, _next: ex
   res.status(500).json({ error: message });
 });
 
-app.listen(port, () => {
+app.listen(port, security.host, () => {
   console.log(`Article review API running at http://localhost:${port}`);
 });

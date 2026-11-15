@@ -93,3 +93,23 @@
 ---
 
 *创建于 2026-05-08 by 小博*
+
+## API security
+
+The API and the Vite development server bind to 127.0.0.1 by default.
+Do not expose them directly to the internet.
+
+A private credential is required for every API listener, including localhost,
+because a reverse proxy can make a loopback service public. Set either:
+- ARTICLE_REVIEW_API_PASSWORD (24+ random characters) and optionally
+  ARTICLE_REVIEW_API_USER (default owner); browsers use HTTP Basic auth.
+- ARTICLE_REVIEW_API_TOKEN (32+ random characters); API clients use a
+  Bearer authorization header.
+
+To intentionally expose the listener, set ARTICLE_REVIEW_HOST; use HTTPS and
+a trusted gateway or authenticated reverse proxy. Set
+ARTICLE_REVIEW_ALLOWED_ORIGINS to exact comma-separated trusted web
+origins if cross-origin requests are needed. Wildcard CORS is denied.
+
+Server startup fails closed if no private credentials are configured.
+Store these values in the process environment, never in Git or a web bundle.
